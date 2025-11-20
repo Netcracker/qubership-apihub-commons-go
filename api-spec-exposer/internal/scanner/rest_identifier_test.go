@@ -147,10 +147,10 @@ func TestRestIdentifierIdentifySwagger20(t *testing.T) {
 
 func TestRestIdentifierIdentifyYAML(t *testing.T) {
 	identifier := &RestIdentifier{}
-	content := []byte(`openapi: 3.0.0
-info:
-	title: YAML API
-	version: 1.0.0`)
+	content := []byte("openapi: 3.0.0\n" +
+		"info:\n" +
+		"  title: YAML API\n" +
+		"  version: 1.0.0")
 
 	spec, warnings, errors := identifier.Identify("test.yaml", content)
 
@@ -389,7 +389,7 @@ func TestRestIdentifierIdentifyInvalidJSON(t *testing.T) {
 func TestRestIdentifierIdentifyInvalidYAML(t *testing.T) {
 	identifier := &RestIdentifier{}
 	content := []byte(`openapi: 3.0.0
-	invalid: [unclosed`)
+  invalid: [unclosed`)
 
 	spec, warnings, errors := identifier.Identify("test.yaml", content)
 

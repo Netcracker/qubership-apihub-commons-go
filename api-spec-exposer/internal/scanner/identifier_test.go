@@ -117,8 +117,8 @@ version: "1.0"`),
 		{
 			name: "Nested YAML",
 			content: []byte(`info:
-	title: API
-	version: "2.0"`),
+  title: API
+  version: "2.0"`),
 			expectErr: false,
 			validate: func(t *testing.T, data map[string]interface{}) {
 				info, ok := data["info"].(map[string]interface{})
