@@ -16,9 +16,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Make build.sh executable
-        run: chmod +x build.sh
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
