@@ -13,7 +13,7 @@ Library for working with API specifications in the Qubership API Hub ecosystem. 
 
 ## Project Structure
 
-```
+```text
 .
 ├── api-spec-exposer/          # Main module for API spec exposure
 │   ├── config/                # Configuration and data types

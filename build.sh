@@ -24,7 +24,7 @@ error() {
 }
 
 # Check if Go is installed
-if ! command -v go &> /dev/null; then
+if ! command -v go &>/dev/null; then
     error "Go is not installed. Please install Go 1.21 or later."
     exit 1
 fi
@@ -83,4 +83,3 @@ info "Running go vet..."
 go vet ./...
 
 info "Build completed successfully!"
-
