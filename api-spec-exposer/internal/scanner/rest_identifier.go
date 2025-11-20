@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
@@ -14,10 +15,11 @@ func (i *RestIdentifier) CanHandle(path string) bool {
 	return ext == "json" || ext == "yaml" || ext == "yml"
 }
 
-func (i *RestIdentifier) Identify(path string, content []byte) (*config.SpecMetadata, error) {
+func (i *RestIdentifier) Identify(path string, content []byte) (*config.SpecMetadata, []string, []error) {
 	var data map[string]interface{}
 	var format config.Format
 	var err error
+	var warnings []string
 
 	ext := getFileExtension(path)
 	if ext == "json" {
@@ -27,31 +29,36 @@ func (i *RestIdentifier) Identify(path string, content []byte) (*config.SpecMeta
 		data, err = parseYAML(content)
 		format = config.FormatYAML
 	} else {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	if err != nil {
-		return nil, nil
+		return nil, nil, []error{fmt.Errorf("failed to parse %s file %s: %w", ext, path, err)}
 	}
 
 	openapiVersion := getString(data, "openapi")
 	swaggerVersion := getString(data, "swagger")
 
 	if openapiVersion == "" && swaggerVersion == "" {
-		return nil, nil
-	}
-
-	if !hasKey(data, "info") {
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	name := getFileName(path)
-	info, ok := data["info"].(map[string]interface{})
-	if !ok || !hasKey(info, "title") {
-		return nil, nil
+
+	if !hasKey(data, "info") {
+		warnings = append(warnings, fmt.Sprintf("file %s: 'info' field is missing, using filename as name", path))
 	} else {
-		if title, ok := info["title"].(string); ok && title != "" {
-			name = title
+		info, ok := data["info"].(map[string]interface{})
+		if !ok {
+			warnings = append(warnings, fmt.Sprintf("file %s: 'info' field is not an object, using filename as name", path))
+		} else if !hasKey(info, "title") {
+			warnings = append(warnings, fmt.Sprintf("file %s: 'title' field is missing in 'info', using filename as name", path))
+		} else {
+			if title, ok := info["title"].(string); ok && title != "" {
+				name = title
+			} else {
+				warnings = append(warnings, fmt.Sprintf("file %s: 'title' field is empty or invalid, using filename as name", path))
+			}
 		}
 	}
 
@@ -60,15 +67,19 @@ func (i *RestIdentifier) Identify(path string, content []byte) (*config.SpecMeta
 		docType = config.DocTypeOpenAPI31
 	} else if strings.HasPrefix(openapiVersion, "3.0") {
 		docType = config.DocTypeOpenAPI30
-	} else if strings.HasPrefix(swaggerVersion, "2.") {
+	} else if strings.HasPrefix(swaggerVersion, "2.") || strings.HasPrefix(openapiVersion, "2.") {
 		docType = config.DocTypeOpenAPI20
 	} else {
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	//TODO: add x-api-kind value validation
 	xApiKind := getString(data, "x-api-kind")
-	if xApiKind == "" {
+	if xApiKind != "" {
+		if val := strings.ToLower(xApiKind); val != "bwc" && val != "no-bwc" {
+			warnings = append(warnings, fmt.Sprintf("file %s: 'x-api-kind' has invalid value '%s', using default 'BWC'", path, xApiKind))
+			xApiKind = "BWC"
+		}
+	} else {
 		xApiKind = getXApiKind(path)
 	}
 
@@ -80,5 +91,5 @@ func (i *RestIdentifier) Identify(path string, content []byte) (*config.SpecMeta
 		Format:   format,
 		FileId:   generateFileId(path),
 		XApiKind: xApiKind,
-	}, nil
+	}, warnings, nil
 }

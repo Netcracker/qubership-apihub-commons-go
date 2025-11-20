@@ -14,7 +14,7 @@ import (
 // Identifier interface for spec type identification
 type Identifier interface {
 	// Identify attempts to identify the spec type from file content
-	Identify(path string, content []byte) (*config.SpecMetadata, error)
+	Identify(path string, content []byte) (*config.SpecMetadata, []string, []error)
 
 	// CanHandle returns true if this identifier can handle the file
 	CanHandle(path string) bool
@@ -26,17 +26,20 @@ type IdentifierChain struct {
 }
 
 // Identify tries each identifier in order until one succeeds
-func (ic *IdentifierChain) Identify(path string, content []byte) (*config.SpecMetadata, error) {
+func (ic *IdentifierChain) Identify(path string, content []byte) (*config.SpecMetadata, []string, []error) {
 	for _, identifier := range ic.identifiers {
 		if identifier.CanHandle(path) {
-			spec, err := identifier.Identify(path, content)
-			if err == nil && spec != nil {
-				return spec, nil
+			spec, warnings, errors := identifier.Identify(path, content)
+			if spec != nil {
+				return spec, warnings, errors
+			}
+			if len(warnings) > 0 || len(errors) > 0 {
+				return nil, warnings, errors
 			}
 		}
 	}
 
-	return nil, nil
+	return nil, nil, nil
 }
 
 // Helper functions

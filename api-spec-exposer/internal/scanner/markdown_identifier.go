@@ -12,7 +12,7 @@ func (i *MarkdownIdentifier) CanHandle(path string) bool {
 	return ext == "md" || ext == "markdown"
 }
 
-func (i *MarkdownIdentifier) Identify(path string, content []byte) (*config.SpecMetadata, error) {
+func (i *MarkdownIdentifier) Identify(path string, content []byte) (*config.SpecMetadata, []string, []error) {
 	return &config.SpecMetadata{
 		Name:     getFileName(path),
 		FilePath: path,
@@ -21,5 +21,5 @@ func (i *MarkdownIdentifier) Identify(path string, content []byte) (*config.Spec
 		Format:   config.FormatMarkdown,
 		FileId:   generateFileId(path),
 		XApiKind: getXApiKind(path),
-	}, nil
+	}, nil, nil
 }

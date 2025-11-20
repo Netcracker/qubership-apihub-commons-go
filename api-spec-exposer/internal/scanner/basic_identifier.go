@@ -11,7 +11,7 @@ func (i *BasicIdentifier) CanHandle(path string) bool {
 	return true
 }
 
-func (i *BasicIdentifier) Identify(path string, content []byte) (*config.SpecMetadata, error) {
+func (i *BasicIdentifier) Identify(path string, content []byte) (*config.SpecMetadata, []string, []error) {
 	return &config.SpecMetadata{
 		Name:     getFileName(path),
 		FilePath: path,
@@ -20,5 +20,5 @@ func (i *BasicIdentifier) Identify(path string, content []byte) (*config.SpecMet
 		Format:   config.FormatUnknown,
 		FileId:   generateFileId(path),
 		XApiKind: getXApiKind(path),
-	}, nil
+	}, nil, nil
 }

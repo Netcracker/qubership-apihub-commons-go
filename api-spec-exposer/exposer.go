@@ -1,8 +1,6 @@
 package exposer
 
 import (
-	"fmt"
-
 	"github.com/qubership-apihub-commons-go/api-spec-exposer/config"
 	"github.com/qubership-apihub-commons-go/api-spec-exposer/internal/generator"
 	"github.com/qubership-apihub-commons-go/api-spec-exposer/internal/scanner"
@@ -14,10 +12,8 @@ type SpecExposer interface {
 	Discover() (config.DiscoveryResult, error)
 }
 
-// specExposer is the default implementation
 type specExposer struct {
-	config          config.DiscoveryConfig
-	discoveryResult config.DiscoveryResult
+	config config.DiscoveryConfig
 }
 
 // New creates a new SpecExposer instance
@@ -29,23 +25,16 @@ func New(config config.DiscoveryConfig) SpecExposer {
 
 // Discover scans directory and discovers specs
 func (se *specExposer) Discover() (config.DiscoveryResult, error) {
+	var discoveryResult config.DiscoveryResult
 	specScanner := scanner.New(se.config)
 
-	specs, warnings, err := specScanner.Scan()
-	if err != nil {
-		return config.DiscoveryResult{}, fmt.Errorf("scan failed: %w", err)
-	}
+	specs, scanWarnings, scanErrors := specScanner.Scan()
+	discoveryResult.Warnings = append(discoveryResult.Warnings, scanWarnings...)
+	discoveryResult.Errors = append(discoveryResult.Errors, scanErrors...)
 
-	se.discoveryResult.Warnings = append(se.discoveryResult.Warnings, warnings...)
-	se.discoveryResult.Specs = specs
+	gen := generator.New(specs)
+	endpoints := gen.Generate()
+	discoveryResult.Endpoints = endpoints
 
-	gen := generator.New(se.discoveryResult.Specs)
-	endpoints, err := gen.Generate()
-	if err != nil {
-		return config.DiscoveryResult{}, fmt.Errorf("endpoint generation failed: %w", err)
-	}
-
-	se.discoveryResult.Endpoints = endpoints
-
-	return se.discoveryResult, nil
+	return discoveryResult, nil
 }

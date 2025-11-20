@@ -59,9 +59,9 @@ type EndpointConfig struct {
 
 // DiscoveryResult contains the result of spec discovery
 type DiscoveryResult struct {
-	Specs     []SpecMetadata
 	Endpoints []EndpointConfig
-	Warnings  []string // TODO: split into warnings and errors
+	Warnings  []string
+	Errors    []error
 }
 
 // DiscoveryConfig contains configuration for spec discovery

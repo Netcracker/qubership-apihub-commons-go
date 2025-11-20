@@ -31,27 +31,28 @@ func New(cfg config.DiscoveryConfig) *Scanner {
 	}
 }
 
-// Scan scans the directory and returns discovered specs
-func (s *Scanner) Scan() ([]config.SpecMetadata, []string, error) {
+// Scan scans the directory and returns discovered specs, warnings, and errors
+func (s *Scanner) Scan() ([]config.SpecMetadata, []string, []error) {
 	var specs []config.SpecMetadata
 	var warnings []string
+	var errors []error
 
 	if s.config.ScanDirectory == "" {
-		return nil, warnings, fmt.Errorf("scan directory is empty")
+		return nil, warnings, []error{fmt.Errorf("scan directory property is empty")}
 	}
 
 	info, err := os.Stat(s.config.ScanDirectory)
 	if err != nil {
-		return nil, warnings, fmt.Errorf("cannot access scan directory: %w", err)
+		return nil, warnings, []error{fmt.Errorf("cannot access scan directory: %w", err)}
 	}
 
 	if !info.IsDir() {
-		return nil, warnings, fmt.Errorf("scan directory is not a directory")
+		return nil, warnings, []error{fmt.Errorf("scan directory is not a directory")}
 	}
 
 	err = filepath.WalkDir(s.config.ScanDirectory, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("error accessing path %s: %v", path, err))
+			errors = append(errors, fmt.Errorf("error accessing path %s: %v", path, err))
 			return nil // Continue walking
 		}
 
@@ -70,15 +71,14 @@ func (s *Scanner) Scan() ([]config.SpecMetadata, []string, error) {
 
 		content, err := s.readFile(path)
 		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("cannot read file %s: %v", path, err))
+			errors = append(errors, fmt.Errorf("cannot read file %s: %w", path, err))
 			return nil
 		}
 
-		spec, err := s.identifierChain.Identify(path, content)
-		if err != nil {
-			warnings = append(warnings, fmt.Sprintf("detection failed for %s: %v", path, err))
-			return nil
-		}
+		spec, specWarnings, specErrors := s.identifierChain.Identify(path, content)
+
+		warnings = append(warnings, specWarnings...)
+		errors = append(errors, specErrors...)
 
 		if spec != nil {
 			specs = append(specs, *spec)
@@ -88,10 +88,10 @@ func (s *Scanner) Scan() ([]config.SpecMetadata, []string, error) {
 	})
 
 	if err != nil {
-		return specs, warnings, fmt.Errorf("error walking directory: %w", err)
+		errors = append(errors, fmt.Errorf("error walking directory: %w", err))
 	}
 
-	return specs, warnings, nil
+	return specs, warnings, errors
 }
 
 func (s *Scanner) shouldExclude(path string) bool {
@@ -102,20 +102,15 @@ func (s *Scanner) shouldExclude(path string) bool {
 	}
 
 	for _, pattern := range s.config.ExcludePatterns {
-		matched, err := filepath.Match(pattern, base)
+		matched, err := filepath.Match(pattern, path)
 		if err == nil && matched {
 			return true
 		}
 
-		// Also check full path matching
 		relPath, err := filepath.Rel(s.config.ScanDirectory, path)
 		if err == nil {
 			matched, err := filepath.Match(pattern, relPath)
 			if err == nil && matched {
-				return true
-			}
-
-			if strings.Contains(relPath, strings.TrimSuffix(pattern, "/*")) {
 				return true
 			}
 		}
