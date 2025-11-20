@@ -23,7 +23,7 @@ func New(specs []config.SpecMetadata) *Generator {
 }
 
 // Generate generates all endpoint configurations and their handlers
-func (g *Generator) Generate() ([]config.EndpointConfig, error) {
+func (g *Generator) Generate() []config.EndpointConfig {
 	specsByType := g.groupSpecsByType()
 
 	specMap := make(map[string]*config.SpecMetadata)
@@ -46,7 +46,7 @@ func (g *Generator) Generate() ([]config.EndpointConfig, error) {
 		g.generateApihubConfig(specMap, configMap)
 	}
 
-	return g.generateEndpoints(specMap, configMap), nil
+	return g.generateEndpoints(specMap, configMap)
 }
 
 func (g *Generator) generateEndpoints(specMap map[string]*config.SpecMetadata, configMap map[string][]config.ConfigURL) []config.EndpointConfig {
@@ -130,7 +130,7 @@ func (g *Generator) generateRestEndpoints(specs []config.SpecMetadata, specMap m
 	var configURLs []config.ConfigURL
 	for i := range specs {
 		spec := &specs[i]
-		path := fmt.Sprintf("/v3/api-docs/%s", g.makeUnique(spec.FileId, specs))
+		path := fmt.Sprintf("/v3/api-docs/%s", g.makeUnique(spec.FileId))
 
 		specMap[path] = spec
 
@@ -171,7 +171,6 @@ func (g *Generator) generateGraphQLEndpoints(specs []config.SpecMetadata, specMa
 			}
 		}
 
-		//TODO: check that agent is able to handle this case
 		if gqlSpec != nil && introspection != nil {
 			specMap["/api/graphql-server/schema"] = gqlSpec
 			specMap["/graphql/introspection"] = introspection
@@ -187,7 +186,7 @@ func (g *Generator) generateGraphQLEndpoints(specs []config.SpecMetadata, specMa
 		if spec.Type == config.DocTypeIntrospection {
 			path = "/graphql/introspection"
 		} else {
-			path = fmt.Sprintf("/api/graphql-server/schema/%s", g.makeUnique(spec.FileId, specs))
+			path = fmt.Sprintf("/api/graphql-server/schema/%s", g.makeUnique(spec.FileId))
 		}
 
 		specMap[path] = spec
@@ -208,7 +207,7 @@ func (g *Generator) generateOtherEndpoints(specsByType map[config.ApiType][]conf
 		if apiType == config.ApiTypeMarkdown || apiType == config.ApiTypeUnknown {
 			for i := range specs {
 				spec := &specs[i]
-				path := fmt.Sprintf("/v3/api-docs/%s", g.makeUnique(spec.FileId, specs))
+				path := fmt.Sprintf("/v3/api-docs/%s", g.makeUnique(spec.FileId))
 				specMap[path] = spec
 			}
 		}
@@ -231,10 +230,9 @@ func (g *Generator) generateApihubConfig(specMap map[string]*config.SpecMetadata
 
 	configMap["/v3/api-docs/apihub-swagger-config"] = configURLs
 }
-
-func (g *Generator) makeUnique(fileId string, specs []config.SpecMetadata) string {
+func (g *Generator) makeUnique(fileId string) string {
 	count := 0
-	for _, spec := range specs {
+	for _, spec := range g.specs {
 		if spec.FileId == fileId {
 			count++
 		}
