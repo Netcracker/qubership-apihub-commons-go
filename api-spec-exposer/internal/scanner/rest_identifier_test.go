@@ -388,8 +388,8 @@ func TestRestIdentifierIdentifyInvalidJSON(t *testing.T) {
 
 func TestRestIdentifierIdentifyInvalidYAML(t *testing.T) {
 	identifier := &RestIdentifier{}
-	content := []byte(`openapi: 3.0.0
-  invalid: [unclosed`)
+	content := []byte("openapi: 3.0.0\n" +
+		"  invalid: [unclosed")
 
 	spec, warnings, errors := identifier.Identify("test.yaml", content)
 

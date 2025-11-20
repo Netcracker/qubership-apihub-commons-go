@@ -380,10 +380,10 @@ func TestSpecExposerDiscoverWithMixedTypes(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	files := map[string][]byte{
-		"openapi.yaml": []byte(`openapi: 3.0.0
-info:
-  title: YAML API
-  version: 1.0.0`),
+		"openapi.yaml": []byte("openapi: 3.0.0\n" +
+			"info:\n" +
+			"  title: YAML API\n" +
+			"  version: 1.0.0"),
 		"swagger.json": []byte(`{"swagger": "2.0", "info": {"title": "Swagger API", "version": "1.0.0"}}`),
 		"schema.graphql": []byte(`type Query {
 			test: String
