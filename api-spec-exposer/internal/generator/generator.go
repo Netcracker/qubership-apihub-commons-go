@@ -19,13 +19,13 @@ type Generator struct {
 // New creates a new generator
 func New(specs []config.SpecMetadata) *Generator {
 	return &Generator{
-		specs: specs,
+		specs:       specs,
+		usedFileIds: make(map[string]bool),
 	}
 }
 
 // Generate generates endpoint configurations (@config.EndpointConfig) with handlers based on spec metadata (@config.SpecMetadata)
 func (g *Generator) Generate() []config.EndpointConfig {
-	g.usedFileIds = make(map[string]bool)
 	specsByType := g.groupSpecsByType()
 
 	specMap := make(map[string]*config.SpecMetadata)
