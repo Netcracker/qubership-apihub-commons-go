@@ -407,3 +407,4 @@ func TestGeneratorMultipleGraphQLEndpoints(t *testing.T) {
 		t.Error("Expected GraphQL domains config endpoint")
 	}
 }
+
