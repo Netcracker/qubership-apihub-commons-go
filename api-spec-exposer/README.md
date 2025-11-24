@@ -276,7 +276,7 @@ This configuration endpoint provides a complete inventory of all API specificati
 - `name` - Human-readable name derived from the file
 - `type` - Specification type (e.g., `openapi-3-0`, `graphql`, `markdown`, `unknown`)
 - `x-api-kind` - API classification metadata used to categorize APIs. The value is determined as follows:
-  - **For REST specifications**: 
+  - **For REST specifications**:
     - First attempts to extract the value from the OpenAPI spec's `x-api-kind` extension field
     - **Valid values**: Only `"BWC"` or `"no-BWC"` (case-insensitive)
     - If the spec contains an invalid value (e.g., `"external"`, `"internal"`), a warning is logged and `"BWC"` is used as default
